@@ -15,7 +15,8 @@ class AttemptTracker(models.Model):
     score = models.IntegerField(default=0)
 
     started_at = models.DateTimeField()
-    finished_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField()
+    sync_device_id = models.CharField(max_length=255, blank=True, null=True) ## this will be used to determine which device was used to create / update this entry
 
     class Meta:
         abstract = True

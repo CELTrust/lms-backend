@@ -1,6 +1,6 @@
 from ninja import Router
 from .models import Course, Lesson, Quiz
-from .schema import CourseSchema, LessonSchema, QuizSchema
+from .schema import AllSchema, CourseSchema, LessonSchema, QuizSchema
 from typing import List
 
 router = Router()
@@ -20,3 +20,13 @@ def list_lessons(request, course_id: int):
 def get_quiz(request, lesson_id: int):
     quiz = Quiz.objects.filter(lesson_id=lesson_id).first()
     return quiz
+
+
+# @router.get("get-all", response=AllSchema)
+# def list_all(request):
+#     courses = Course.objects.all()
+#     lessons = Lesson.objects.all()
+#     quiz = Quiz.objects.all().prefetch_related('questions')
+
+#     response = AllSchema(courses=[], lessons=[], quiz=None)
+#     return response

@@ -23,6 +23,10 @@ api = NinjaAPI()
 api.add_router("p/", "product.api.router", tags=["Product"])
 # api.add_router("c/", "consumer.api.router")
 
+admin.site.site_header = "CEL. Administration"
+admin.site.site_title = "CEL Administration"
+admin.site.index_title = "CEL Administration"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls)

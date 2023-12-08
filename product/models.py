@@ -1,5 +1,9 @@
 from django.db import models
-from common.models import Tracker, DescCommonFields
+from common.models import Tracker, DescCommonFields, CommonFields
+
+class School(CommonFields):
+    pass
+
 
 class Course(DescCommonFields):
     pass
@@ -9,6 +13,7 @@ class Lesson(DescCommonFields):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True) # TODO: remove blank and null check later
     video_link = models.URLField()
     presentation_link = models.URLField()
+    has_project = models.BooleanField()
     project_description = models.TextField()
 
 
@@ -17,6 +22,7 @@ class Quiz(Tracker):
 
     def __str__(self) -> str:
         return "Quiz for lesson < {} >".format(self.lesson.name)
+
 
 class Question(Tracker):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions")

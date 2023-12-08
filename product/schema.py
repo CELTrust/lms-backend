@@ -19,8 +19,8 @@ class LessonSchema(Schema):
     updated_at: datetime.datetime
     video_link: str
     presentation_link: str
-    project_description: str
-    course: CourseSchema = None
+    course_id: int
+    has_project: bool
 
 class OptionSchema(Schema):
     id: int
@@ -34,4 +34,18 @@ class QuestionSchema(Schema):
 
 class QuizSchema(Schema):
     id: int
+    lesson_id: int
     questions: List[QuestionSchema]
+
+class SchoolSchema(Schema):
+    id: int
+    name: str
+    slug: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+class AllSchema(Schema):
+    schools: List[SchoolSchema]
+    courses: List[CourseSchema]
+    lessons: List[LessonSchema]
+    quizzes: List[QuizSchema]
