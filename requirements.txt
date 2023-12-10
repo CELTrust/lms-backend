@@ -14,6 +14,8 @@ matplotlib-inline==0.1.6
 parso==0.8.3
 pexpect==4.9.0
 prompt-toolkit==3.0.41
+psycopg==3.1.14
+psycopg-binary==3.1.14
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pydantic==2.5.2
