@@ -43,9 +43,3 @@ class SchoolSchema(Schema):
     slug: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
-
-class AllSchema(Schema):
-    schools: List[SchoolSchema]
-    courses: List[CourseSchema]
-    lessons: List[LessonSchema]
-    quizzes: List[QuizSchema]

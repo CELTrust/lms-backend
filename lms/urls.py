@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from ninja import NinjaAPI
 
-api = NinjaAPI()
+api = NinjaAPI(title="CEL LMS API")
 
 api.add_router("p/", "product.api.router", tags=["Product"])
 # api.add_router("c/", "consumer.api.router")

@@ -5,5 +5,11 @@ from .models import Course, Lesson, Quiz, Question, Option
 admin.site.register(Course)
 admin.site.register(Lesson)
 admin.site.register(Quiz)
-admin.site.register(Question)
-admin.site.register(Option)
+
+class OptionAdmin(admin.StackedInline):
+    model = Option
+
+
+@admin.register(Question)
+class OptionAdmin(admin.ModelAdmin):
+    inlines = [OptionAdmin,]
