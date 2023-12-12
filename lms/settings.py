@@ -79,9 +79,10 @@ WSGI_APPLICATION = 'lms.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": "127.0.0.1",
-        "USER": "aash",
-        "NAME": "cel",
+        "HOST": os.environ.get("CEL_DB_HOST"),
+        "USER": os.environ.get('CEL_DB_USER'),
+        "NAME": os.environ.get("CEL_DB_NAME"),
+        'PASSWORD': os.environ.get("CEL_DB_PASSWORD"),
         "PORT": 5432
     }
 }
