@@ -1,7 +1,6 @@
-from enum import unique
 from django.db import models
 from common.models import Tracker, AttemptTracker
-from product.models import Question, Quiz, Lesson, Course, School
+from product.models import Option, Question, Quiz, Lesson, Course, School
 
 class CELUser(Tracker):
     name = models.CharField(max_length=255)
@@ -51,4 +50,5 @@ class QuestionAttempt(Tracker):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="answers")
     user = models.ForeignKey(CELUser, on_delete=models.CASCADE, related_name="answers")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
+    options = models.ManyToManyField(Option)
     is_correct = models.BooleanField()
