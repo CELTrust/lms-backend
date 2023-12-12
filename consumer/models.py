@@ -40,6 +40,7 @@ class ProjectUploadAttempt(Tracker):
         unique_together = (("user", "course"))
 
 
+# Answers
 class QuizAttempt(AttemptTracker, Tracker):
     user = models.ForeignKey(CELUser, on_delete=models.CASCADE, related_name="quiz_attempts")
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")

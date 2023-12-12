@@ -18,7 +18,7 @@ class Lesson(DescCommonFields):
 
 
 class Quiz(Tracker):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name="quiz")
 
     def __str__(self) -> str:
         return "Quiz for lesson < {} >".format(self.lesson.name)
