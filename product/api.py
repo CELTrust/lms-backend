@@ -3,8 +3,7 @@ from .models import Course, Lesson, Quiz
 from .schema import CourseSchema, LessonSchema, QuizSchema
 from typing import List
 
-router = Router()
-
+router = Router(tags=["Product"])
 
 @router.get("courses", response=List[CourseSchema])
 def list_courses(request):

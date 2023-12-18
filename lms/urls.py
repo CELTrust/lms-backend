@@ -21,7 +21,7 @@ from ninja import NinjaAPI
 api = NinjaAPI(title="CEL LMS API")
 
 api.add_router("p/", "product.api.router", tags=["Product"])
-# api.add_router("c/", "consumer.api.router")
+api.add_router("c/", "consumer.api.router")
 
 admin.site.site_header = "CEL. Administration"
 admin.site.site_title = "CEL Administration"

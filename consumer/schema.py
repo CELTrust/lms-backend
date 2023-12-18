@@ -1,53 +1,144 @@
 import datetime
-from ninja import Schema, Field
-from typing import List
-from product.schema import CourseSchema, LessonSchema, QuizSchema
+from typing import List, Literal
 
-class CreateCourseAttemptIn(Schema):
+from ninja import Schema
+
+
+class CourseAttemptIn(Schema):
+    school_id: int
+    gr_number: str
     course_id: int
-    user_id: int
+    status: Literal["started", "finished"]
+    sync_device_id: str
+    score: int = 0
+    updated_at: datetime.datetime
 
-class CreateLessonAttemptIn(Schema):
-    user_id: int
+
+class SyncCourseAttemptsIn(Schema):
+    data: List[CourseAttemptIn]
+
+
+class SyncCourseAttemptOut(Schema):
+    school_id: int
+    course_id: int
+    gr_number: str
+    result: Literal["success", "error"]
+    detail: str = ""
+
+    @classmethod
+    def create_success(cls, school_id: int, course_id: int, gr_number: int):
+        return cls(
+            school_id=school_id,
+            course_id=course_id,
+            gr_number=gr_number,
+            result="success",
+        )
+
+    @classmethod
+    def create_error(cls, school_id: int, course_id: int, gr_number: int, detail: str):
+        return cls(
+            school_id=school_id,
+            course_id=course_id,
+            gr_number=gr_number,
+            result="error",
+            detail=detail,
+        )
+
+
+class SyncCourseAttemptsOut(Schema):
+    results: List[SyncCourseAttemptOut]
+
+
+class LessonAttemptIn(Schema):
+    school_id: int
+    gr_number: str
     lesson_id: int
+    status: Literal["started", "finished"]
+    sync_device_id: str
+    score: int = 0
+    updated_at: datetime.datetime
 
-class CreateQuizAttemptIn(Schema):
-    user_id: int
-    quiz_id: int
 
-class AnswerIn(Schema):
+class SyncLessonAttemptsIn(Schema):
+    data: List[LessonAttemptIn]
+
+
+class SyncLessonAttemptOut(Schema):
+    school_id: int
+    lesson_id: int
+    gr_number: str
+    result: Literal["success", "error"]
+    detail: str = ""
+
+    @classmethod
+    def create_success(cls, school_id: int, lesson_id: int, gr_number: int):
+        return cls(
+            school_id=school_id,
+            lesson_id=lesson_id,
+            gr_number=gr_number,
+            result="success",
+        )
+
+    @classmethod
+    def create_error(cls, school_id: int, lesson_id: int, gr_number: int, detail: str):
+        return cls(
+            school_id=school_id,
+            lesson_id=lesson_id,
+            gr_number=gr_number,
+            result="error",
+            detail=detail,
+        )
+
+
+class SyncLessonAttemptsOut(Schema):
+    results: List[SyncLessonAttemptOut]
+
+
+class QuestionAttemptSchemaIn(Schema):
     question_id: int
+    selected_options: List[int] = []
     is_correct: bool
 
-class UpdateQuizAttemptIn(Schema):
-    user_id: int
-    answers: List[AnswerIn]
 
-class CELUserSchema(Schema):
-    name: str
-    school: Field(None, alias="school.name")
-    rollnum: str
+class QuizAttemptSchemaIn(Schema):
+    school_id: int
+    gr_number: str
+    quiz_id: int
+    sync_device_id: str
+    question_attempts: List[QuestionAttemptSchemaIn]
+    updated_at: datetime.datetime
 
-class CourseAttemptSchema(Schema):
-    id: int
-    user: CELUserSchema
-    course: CourseSchema
-    status: str
-    score: str
-    started_at: datetime.datetime
-    finished_at: datetime.datetime
 
-class LessonAttemptSchema(Schema):
-    id: int
-    user: CELUserSchema
-    lesson: LessonSchema
+class SyncQuizAttemptSchema(Schema):
+    data: List[QuizAttemptSchemaIn]
 
-class AnswerSchema(Schema):
-    question_id: int
-    is_correct: int
 
-class QuizAttemptSchema(Schema):
-    id: int
-    user: CELUserSchema
-    quiz: QuizSchema
-    answers: List[AnswerSchema]
+class SyncQuizAttemptOut(Schema):
+    school_id: int
+    quiz_id: int
+    gr_number: str
+    result: Literal["success", "error"]
+    detail: str = ""
+
+    @classmethod
+    def create_success(cls, school_id: int, quiz_id: int, gr_number: int):
+        return cls(
+            school_id=school_id,
+            quiz_id=quiz_id,
+            gr_number=gr_number,
+            result="success",
+        )
+
+    @classmethod
+    def create_error(cls, school_id: int, quiz_id: int, gr_number: int, detail: str):
+        return cls(
+            school_id=school_id,
+            quiz_id=quiz_id,
+            gr_number=gr_number,
+            result="error",
+            detail=detail,
+        )
+
+
+class SyncQuizAttemptsOut(Schema):
+    results: List[SyncQuizAttemptOut]

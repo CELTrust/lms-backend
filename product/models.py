@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class School(models.Model):
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255, unique=True)
@@ -51,8 +52,10 @@ class Quiz(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
     def __str__(self) -> str:
         return "Quiz for lesson < {} >".format(self.lesson.name)
+
 
 
 class Question(models.Model):

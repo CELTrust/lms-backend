@@ -1,75 +1,191 @@
-from ast import List
-import datetime
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from ninja import Field, Router, Schema
+from ninja import Router
+
 from common import constants
-from common.models import AttemptTracker
-from consumer.models import Answer, CELUser, CourseAttempt, LessonAttempt, QuizAttempt
-from .schema import CourseAttemptSchema, CreateCourseAttemptIn, CreateLessonAttemptIn, LessonAttemptSchema, QuizAttemptSchema, CreateQuizAttemptIn
-from product.schema import CourseSchema, LessonSchema, QuizSchema
+from consumer.models import (CELUser, CourseAttempt, LessonAttempt,
+                             QuestionAttempt, QuizAttempt)
+from product.models import Course, Lesson
 
-router = Router()
+from .schema import (SyncCourseAttemptOut, SyncCourseAttemptsIn,
+                     SyncCourseAttemptsOut, SyncLessonAttemptOut,
+                     SyncLessonAttemptsIn, SyncLessonAttemptsOut,
+                     SyncQuizAttemptOut, SyncQuizAttemptSchema,
+                     SyncQuizAttemptsOut)
 
-@router.post("course-attempts", response=CourseAttemptSchema)
-def create_course_attempt(request, payload: CreateCourseAttemptIn):
-    course_attempt = CourseAttempt.objects.create(
-        user_id=payload.user_id, course_id=payload.course_id,
-        started_at=datetime.datetime.now(), status=constants.STATUS_STARTED
-    )
-    return course_attempt
+router = Router(tags=["Consumer"])
 
-@router.post("lesson-attempts", response=LessonAttemptSchema)
-def create_lesson_attempt(request, payload: CreateLessonAttemptIn):
-    lesson_attempt = LessonAttempt.objects.create(
-        user_id=payload.user_id, lesson_id=payload.lesson_id,
-        started_at=datetime.datetime.now(), status=constants.STATUS_STARTED
-    )
-    return lesson_attempt
 
-@router.post("quiz-attempts", response=QuizAttemptSchema)
-def create_quiz_attempt(request, paylaod: CreateQuizAttemptIn):
-    quiz_attempt = QuizAttempt.objects.create(
-        user_id=paylaod.user_id, quiz_id=paylaod.quiz_id,
-        started_at=datetime.datetime.now(), status=constants.STATUS_STARTED
-    )
-    return quiz_attempt
+@router.post("sync-course-attempts", response=SyncCourseAttemptsOut)
+def sync_course_attempts(request, payload: SyncCourseAttemptsIn):
+    """
+    for each item in the payload
+        If course attempt is present and is not updated, update it
+        else create a new course attempt
+    """
+    results = []
+    for item in payload.data:
+        try:
+            user = get_object_or_404(
+                CELUser, gr_number=item.gr_number, school_id=item.school_id
+            )
 
-@router.put("quiz-attempts/{attempt_id}", response=QuizAttemptSchema)
-def update_quiz_attempt(request, attempt_id: int, payload: UpdateQuizAttemptIn):
-    quiz_attempt = get_object_or_404(QuizAttempt, id=attempt_id)
-    for answer in payload.answers:
-        Answer.objects.create(quiz=quiz_attempt.quiz, user=payload.user_id, question_id=answer.question_id, is_correct=answer.is_correct)
+            course_attempt = CourseAttempt.objects.filter(
+                user=user, course_id=item.course_id
+            ).first()
+            if course_attempt:
+                if course_attempt.can_update(item.updated_at):
+                    course_attempt = course_attempt.update_attempt(
+                        sync_device_id=item.sync_device_id,
+                        score=item.score,
+                        updated_at=item.updated_at,
+                    )
+            else:
+                course = get_object_or_404(Course, id=item.course_id)
+                course_attempt = CourseAttempt.create_attempt(
+                    user_id=user.id,
+                    course_id=course.id,
+                    score=0,
+                    sync_device_id=item.sync_device_id,
+                    updated_at=item.updated_at,
+                )
 
-    if quiz_attempt.is_complete():
-        quiz_attempt.mark_finished()
+            result = SyncCourseAttemptOut.create_success(
+                course_id=item.course_id,
+                school_id=item.school_id,
+                gr_number=item.gr_number,
+            )
+            results.append(result)
+        except Http404 as e:
+            result = SyncCourseAttemptOut.create_error(
+                course_id=item.course_id,
+                school_id=item.school_id,
+                gr_number=item.gr_number,
+                detail=e.__str__(),
+            )
+            results.append(result)
 
-        lesson_attempt = quiz_attempt.lesson_attempt
-        if lesson_attempt.is_complete():
-            lesson_attempt.mark_finished()
+    return SyncCourseAttemptsOut(results=results)
 
-            course_attempt = lesson_attempt.course_attempt
-            if course_attempt.is_complete():
-                course_attempt.mark_finished()
 
-    return quiz_attempt
+@router.post("sync-lesson-attempts", response=SyncLessonAttemptsOut)
+def create_lesson_attempt(request, payload: SyncLessonAttemptsIn):
+    """
+    for each item:
+        If lesson attempt is present and is not updated, update it
+        else create a new lesson attempt
+    """
+    results = []
+    for item in payload.data:
+        try:
+            user = get_object_or_404(
+                CELUser, gr_number=item.gr_number, school_id=item.school_id
+            )
 
-@router.get("/course-attempts", response=List[CourseAttemptSchema])
-def list_user_course_attempts(request, course_id: int):
-    user_id = 1 # replace this with getting user from session
-    course_attempts = CourseAttempt.objects.filter(user_id=user_id)
-    return course_attempts
+            lesson_attempt = LessonAttempt.objects.filter(
+                user=user, lesson_id=item.lesson_id
+            ).first()
+            if lesson_attempt:
+                if lesson_attempt.can_update(item.updated_at):
+                    lesson_attempt = lesson_attempt.update_attempt(
+                        sync_device_id=item.sync_device_id,
+                        score=item.score,
+                        updated_at=item.updated_at,
+                    )
+            else:
+                lesson = get_object_or_404(Lesson, id=item.lesson_id)
+                lesson_attempt = LessonAttempt.create_attempt(
+                    user_id=user.id,
+                    lesson_id=lesson.id,
+                    score=0,
+                    sync_device_id=item.sync_device_id,
+                    updated_at=item.updated_at,
+                )
 
-@router.get("course-attempts/{course_id}", response=CourseAttemptSchema)
-def get_recent_course_attempt(request, course_id: int):
-    course_attempt = CourseAttempt.objects.filter(user_id=1, course_id=course_id).last()
-    return course_attempt
+            result = SyncLessonAttemptOut.create_success(
+                lesson_id=item.lesson_id,
+                school_id=item.school_id,
+                gr_number=item.gr_number,
+            )
+            results.append(result)
+        except Http404 as e:
+            result = SyncLessonAttemptOut.create_error(
+                lesson_id=item.lesson_id,
+                school_id=item.school_id,
+                gr_number=item.gr_number,
+                detail=e.__str__(),
+            )
+            results.append(result)
 
-@router.get("lesson-attempts/{lesson_id}", response=LessonAttemptSchema)
-def list_lesson_attempts(request, lesson_id: int):
-    lesson_attempt = LessonAttempt.objects.filter(user_id=1, lesson_id=lesson_id).last()
-    return lesson_attempt
+    return SyncLessonAttemptsOut(results=results)
 
-@router.get("quiz-attempts/{quiz_id}", response=QuizAttemptSchema)
-def list_quiz_attempts(request, quiz_id: int):
-    quiz_attempt_schema = QuizAttempt.objects.filter(user_id=1, quiz_id=quiz_id).last()
-    return quiz_attempt_schema
+
+@router.post("sync-quiz-attempts", response=SyncQuizAttemptsOut)
+def create_quiz_attempt(request, payload: SyncQuizAttemptSchema):
+    """
+    for each item:
+        Check if the quiz attempt by the user is already present.
+        If yes, ignore it
+        if not, create a new one
+    """
+    results = []
+    for item in payload.data:
+        try:
+            user = get_object_or_404(
+                CELUser, gr_number=item.gr_number, school_id=item.school_id
+            )
+
+            quiz_attempt = QuizAttempt.objects.filter(
+                user=user, quiz_id=item.quiz_id
+            ).first()
+            if quiz_attempt:
+                if quiz_attempt.can_update(item.updated_at):
+                    quiz_attempt.sync_device_id = item.sync_device_id
+                    quiz_attempt.updated_at = item.updated_at
+
+                    quiz_attempt.answers.all().delete()
+                    score = 0
+                    for qa in item.question_attempts:
+                        if qa.is_correct:
+                            score += 1
+                        QuestionAttempt.objects.create(
+                            question_id=qa.question_id,
+                            quiz_id=item.quiz_id,
+                            user=user,
+                            is_correct=qa.is_correct,
+                            updated_at=item.updated_at,
+                        )
+
+                    quiz_attempt.score = score
+                    quiz_attempt.save()
+            else:
+                quiz_attempt = QuizAttempt.objects.create(
+                    user=user,
+                    quiz_id=item.quiz_id,
+                    status=constants.STATUS_FINISHED,
+                    sync_device_id=item.sync_device_id,
+                    created_at=item.updated_at,
+                    updated_at=item.updated_at,
+                )
+
+                score = 0
+                for qa in item.question_attempts:
+                    if qa.is_correct:
+                        score += 1
+                    QuestionAttempt.objects.create(
+                        question_id=qa.question_id,
+                        quiz_id=item.quiz_id,
+                        user=user,
+                        is_correct=qa.is_correct,
+                        updated_at=item.updated_at,
+                    )
+
+                quiz_attempt.score = score
+                quiz_attempt.save()
+
+            result = SyncQuizAttemptOut.create_success(school_id=item.school_id, quiz_id=item.quiz_id, gr_number=item.gr_number)
+            results.append(result)
+        except Http404 as e:
+            result = SyncCourseAttemptOut.create_error(school_id=item.school_id, quiz_id=item.quiz_id, gr_number=item.gr_number)
+            results.append(result)
+    return SyncQuizAttemptsOut(results=results)
