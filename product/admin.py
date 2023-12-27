@@ -1,8 +1,9 @@
 from django.contrib import admin
 
-from .models import Course, Lesson, Option, Question
+from .models import Course, Lesson, Option, Question, School
 
 admin.site.register(Lesson)
+admin.site.register(School)
 
 class OptionAdmin(admin.StackedInline):
     model = Option

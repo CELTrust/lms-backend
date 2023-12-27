@@ -38,7 +38,7 @@ class AttemptTracker(models.Model):
 
 class CommonFields(Tracker):
     name = models.CharField(max_length=255)
-    slug = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, editable=False)
 
     def __str__(self) -> str:
         return "{}".format(self.slug)

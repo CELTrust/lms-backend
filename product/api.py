@@ -3,10 +3,16 @@ from typing import List
 from ninja import Router
 from ninja.pagination import paginate
 
-from .models import Course, Lesson, Question
-from .schema import CourseSchema, LessonSchema, QuestionSchema
+from .models import Course, Lesson, Question, School
+from .schema import CourseSchema, LessonSchema, QuestionSchema, SchoolSchema
 
 router = Router(tags=["Product"])
+
+@router.get("schools", response=List[SchoolSchema])
+@paginate
+def list_schools(request):
+    schools = School.objects.all()
+    return schools
 
 @router.get("courses", response=List[CourseSchema])
 @paginate

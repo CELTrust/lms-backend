@@ -3,13 +3,20 @@ from typing import List
 
 from ninja import ModelSchema, Schema
 
-from product.models import Course
+from product.models import Course, School
 
 
 class CourseSchema(ModelSchema):
     class Meta:
         model = Course
         fields = '__all__'
+
+
+class SchoolSchema(ModelSchema):
+    class Meta:
+        model = School
+        fields = '__all__'
+
 
 class LessonSchema(Schema):
     id: int
@@ -33,10 +40,3 @@ class QuestionSchema(Schema):
     lesson_id: int
     text: str
     options: List[OptionSchema]
-
-class SchoolSchema(Schema):
-    id: int
-    name: str
-    slug: str
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
