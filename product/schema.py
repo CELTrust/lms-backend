@@ -1,9 +1,12 @@
 import datetime
+from ast import Mod
+from dataclasses import field
+from optparse import Option
 from typing import List
 
 from ninja import ModelSchema, Schema
 
-from product.models import Course, School
+from product.models import Course, Lesson, Question, School
 
 
 class CourseSchema(ModelSchema):
@@ -18,17 +21,10 @@ class SchoolSchema(ModelSchema):
         fields = '__all__'
 
 
-class LessonSchema(Schema):
-    id: int
-    name: str
-    slug: str
-    description: str
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
-    video_link: str
-    presentation_link: str
-    course_id: int
-    has_project: bool
+class LessonSchema(ModelSchema):
+    class Meta:
+        model = Lesson
+        fields = '__all__'
 
 class OptionSchema(Schema):
     id: int

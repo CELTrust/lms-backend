@@ -21,11 +21,13 @@ def list_courses(request):
     return courses
 
 @router.get("lessons", response=List[LessonSchema])
+@paginate
 def list_lessons(request):
     lessons = Lesson.objects.all()
     return lessons
 
 @router.get("questions", response=List[QuestionSchema])
+@paginate
 def get_questions(request):
     quizes = Question.objects.all()
     return quizes
