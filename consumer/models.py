@@ -1,13 +1,15 @@
 import datetime
+from tkinter.tix import Tree
 
 from django.db import models
 from typing_extensions import Self
 
 from common import constants
-from product.models import Course, Lesson, Option, Question, Quiz, School
+from common.models import AttemptTracker, Tracker
+from product.models import Course, Lesson, Option, Question, School
 
 
-class CELUser(models.Model):
+class CELUser(Tracker):
     name = models.CharField(max_length=255)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     gr_number = models.CharField(max_length=255)
@@ -26,36 +28,13 @@ class CELUser(models.Model):
         return cls.objects.filter(id=id).exists()
 
 
-class CourseAttempt(models.Model):
+class CourseAttempt(AttemptTracker):
     user = models.ForeignKey(
         CELUser, on_delete=models.CASCADE, related_name="course_attempts"
     )
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="attempts"
     )
-
-    status = models.CharField(
-        max_length=64,
-        choices=constants.StatusChoices.choices(),
-        default=constants.STATUS_STARTED,
-    )
-    score = models.IntegerField(default=0)
-    sync_device_id = models.CharField(
-        max_length=255
-    )  ## this will be used to determine which device was used to create / update this entry
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def can_update(self, updated_at) -> bool:
-        return not self.has_finished() and updated_at > self.updated_at
-
-    def has_finished(self) -> bool:
-        return self.status == constants.STATUS_FINISHED
-
-    @classmethod
-    def exists(cls, id) -> bool:
-        return cls.objects.filter(id=id).exists()
 
     class Meta:
         unique_together = (("user", "course"),)
@@ -102,25 +81,6 @@ class LessonAttempt(models.Model):
         Lesson, on_delete=models.CASCADE, related_name="attempts"
     )
 
-    status = models.CharField(max_length=64, choices=constants.StatusChoices)
-    score = models.IntegerField(default=0)
-    sync_device_id = models.CharField(
-        max_length=255
-    )  ## this will be used to determine which device was used to create / update this entry
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def can_update(self, updated_at) -> bool:
-        return not self.has_finished() and updated_at > self.updated_at
-
-    def has_finished(self) -> bool:
-        return self.status == constants.STATUS_FINISHED
-
-    @classmethod
-    def exists(cls, id) -> bool:
-        return cls.objects.filter(id=id).exists()
-
     @classmethod
     def get_by_user_lesson(cls, user_id, lesson_id) -> Self:
         return LessonAttempt.objects.filter(
@@ -160,19 +120,11 @@ class LessonAttempt(models.Model):
         unique_together = (("user", "lesson"),)
 
 
-class ProjectUploadAttempt(models.Model):
-    user = models.ForeignKey(
-        CELUser, on_delete=models.CASCADE, related_name="project_upload_attempts"
-    )
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="project_upload_attempts"
-    )
+class ProjectUploadAttempt(AttemptTracker):
+    user = models.ForeignKey(CELUser, on_delete=models.CASCADE, related_name="project_upload_attempts")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="project_upload_attempts")
 
-    file = models.FileField()
-    size = models.IntegerField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    file_path = models.CharField(max_length=255)
 
     @classmethod
     def exists(cls, id) -> bool:
@@ -181,46 +133,26 @@ class ProjectUploadAttempt(models.Model):
     class Meta:
         unique_together = ("user", "course")
 
-
 # Answers
-class QuizAttempt(models.Model):
-    user = models.ForeignKey(
-        CELUser, on_delete=models.CASCADE, related_name="quiz_attempts"
-    )
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
-
-    status = models.CharField(max_length=64, choices=constants.STATUSES)
-    score = models.IntegerField(default=0)
-    sync_device_id = models.CharField(
-        max_length=255, blank=True, null=True
-    )  ## this will be used to determine which device was used to create / update this entry
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class QuestionAttempt(AttemptTracker):
+    user = models.ForeignKey(CELUser, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
 
     @classmethod
-    def exists(cls, id) -> bool:
-        return cls.objects.filter(id=id).exists()
+    def create_attempt(cls, user_id: int, question_id: int, score: int, sync_device_id: int, updated_at: datetime.datetime) -> Self:
+        return cls.objects.create(user_id=user_id, question_id=question_id,
+                                  sync_device_id=sync_device_id, updated_at=updated_at, created_at=updated_at,
+                                  status=constants.STATUS_FINISHED)
 
-    def has_finished(self) -> bool:
-        return self.status == constants.STATUS_FINISHED
+    def update_attempt(self, score: int, sync_device_id: int, updated_at: datetime.datetime) -> Self:
+        self.score = score
+        self.sync_device_id = sync_device_id
+        self.updated_at = updated_at
+        self.status = constants.STATUS_FINISHED
+        self.save()
+        return self
 
-    def can_update(self, updated_at) -> bool:
-        return not self.has_finished() and updated_at > self.updated_at
-
-
-class QuestionAttempt(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="answers")
-    user = models.ForeignKey(CELUser, on_delete=models.CASCADE, related_name="answers")
-    question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name="answers"
-    )
-    options = models.ManyToManyField(Option)
-    is_correct = models.BooleanField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+    # TODO: add option_ids and corresponding validation
     @classmethod
     def exists(cls, id) -> bool:
         return cls.objects.filter(id=id).exists()

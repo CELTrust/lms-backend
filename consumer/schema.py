@@ -94,51 +94,64 @@ class SyncLessonAttemptsOut(Schema):
     results: List[SyncLessonAttemptOut]
 
 
-class QuestionAttemptSchemaIn(Schema):
-    question_id: int
-    selected_options: List[int] = []
-    is_correct: bool
-
-
-class QuizAttemptSchemaIn(Schema):
+class QuestionAttemptIn(Schema):
     school_id: int
     gr_number: str
-    quiz_id: int
     sync_device_id: str
-    question_attempts: List[QuestionAttemptSchemaIn]
+    question_id: int
+    is_correct: bool
     updated_at: datetime.datetime
 
-
-class SyncQuizAttemptSchema(Schema):
-    data: List[QuizAttemptSchemaIn]
-
-
-class SyncQuizAttemptOut(Schema):
+class SyncQuestionAttemptOut(Schema):
     school_id: int
-    quiz_id: int
     gr_number: str
+
+    question_id: int
     result: Literal["success", "error"]
     detail: str = ""
 
     @classmethod
-    def create_success(cls, school_id: int, quiz_id: int, gr_number: int):
+    def create_success(cls, school_id: int, question_id: int, gr_number: int):
         return cls(
             school_id=school_id,
-            quiz_id=quiz_id,
+            question_id=question_id,
             gr_number=gr_number,
             result="success",
         )
 
     @classmethod
-    def create_error(cls, school_id: int, quiz_id: int, gr_number: int, detail: str):
+    def create_error(cls, school_id: int, question_id: int, gr_number: int, detail: str):
         return cls(
             school_id=school_id,
-            quiz_id=quiz_id,
+            question_id=question_id,
             gr_number=gr_number,
             result="error",
             detail=detail,
         )
 
+class SyncQuestionAttemptsOut(Schema):
+    results: List[SyncQuestionAttemptOut]
 
-class SyncQuizAttemptsOut(Schema):
-    results: List[SyncQuizAttemptOut]
+
+class SyncQuestionAttemptsIn(Schema):
+    data: List[QuestionAttemptIn]
+
+
+class CELUserIn(Schema):
+    school_id: int
+    gr_number: str
+    name: str
+
+
+class SyncCELUsersIn(Schema):
+    data: List[CELUserIn]
+
+
+class SyncCELUserOut(Schema):
+    gr_number: str
+    result: Literal["success", "error"]
+    detail: str = ""
+
+
+class SyncCELUsersOut(Schema):
+    results: List[SyncCELUserOut]

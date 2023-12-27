@@ -1,6 +1,8 @@
-from typing import List
-from ninja import Schema
 import datetime
+from typing import List
+
+from ninja import Schema
+
 
 class CourseSchema(Schema):
     id: int
@@ -29,13 +31,9 @@ class OptionSchema(Schema):
 
 class QuestionSchema(Schema):
     id: int
+    lesson_id: int
     text: str
     options: List[OptionSchema]
-
-class QuizSchema(Schema):
-    id: int
-    lesson_id: int
-    questions: List[QuestionSchema]
 
 class SchoolSchema(Schema):
     id: int

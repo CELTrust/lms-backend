@@ -1,7 +1,9 @@
-from ninja import Router
-from .models import Course, Lesson, Quiz
-from .schema import CourseSchema, LessonSchema, QuizSchema
 from typing import List
+
+from ninja import Router
+
+from .models import Course, Lesson, Question
+from .schema import CourseSchema, LessonSchema, QuestionSchema
 
 router = Router(tags=["Product"])
 
@@ -15,7 +17,7 @@ def list_lessons(request):
     lessons = Lesson.objects.all()
     return lessons
 
-@router.get("quizzes", response=List[QuizSchema])
-def get_quiz(request):
-    quizes = Quiz.objects.all()
+@router.get("questions", response=List[QuestionSchema])
+def get_questions(request):
+    quizes = Question.objects.all()
     return quizes
