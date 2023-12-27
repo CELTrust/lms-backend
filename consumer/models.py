@@ -48,23 +48,10 @@ class CourseAttempt(AttemptTracker):
         return cls.objects.filter(user_id=user_id, course_id=course_id).first()
 
     @classmethod
-    def create_attempt(
-        cls,
-        user_id: int,
-        course_id: int,
-        score: int,
-        sync_device_id: int,
-        updated_at: datetime.datetime,
-    ) -> Self:
-        obj = cls.objects.create(
-            user_id=user_id,
-            course_id=course_id,
-            status=constants.STATUS_STARTED,
-            score=score,
-            sync_device_id=sync_device_id,
-            created_at=updated_at,
-            updated_at=updated_at,
-        )
+    def create_attempt(cls, user_id: int, course_id: int, score: int, sync_device_id: int,
+                       updated_at: datetime.datetime) -> Self:
+        obj = cls.objects.create(user_id=user_id, course_id=course_id, status=constants.STATUS_STARTED, score=score,
+                                 ync_device_id=sync_device_id, started_at=updated_at, updated_at=updated_at)
         return obj
 
     def update_attempt(
@@ -77,7 +64,7 @@ class CourseAttempt(AttemptTracker):
         return self
 
 
-class LessonAttempt(models.Model):
+class LessonAttempt(AttemptTracker):
     user = models.ForeignKey(
         CELUser, on_delete=models.CASCADE, related_name="lesson_attempts"
     )
@@ -106,7 +93,7 @@ class LessonAttempt(models.Model):
             status=constants.STATUS_STARTED,
             score=score,
             sync_device_id=sync_device_id,
-            created_at=updated_at,
+            started_at=updated_at,
             updated_at=updated_at,
         )
         return obj
@@ -145,8 +132,8 @@ class QuestionAttempt(AttemptTracker):
     @classmethod
     def create_attempt(cls, user_id: int, question_id: int, score: int, sync_device_id: int, updated_at: datetime.datetime) -> Self:
         return cls.objects.create(user_id=user_id, question_id=question_id,
-                                  sync_device_id=sync_device_id, updated_at=updated_at, created_at=updated_at,
-                                  status=constants.STATUS_FINISHED)
+                                  sync_device_id=sync_device_id, updated_at=updated_at, started_at=updated_at,
+                                  status=constants.STATUS_FINISHED, score=score)
 
     def update_attempt(self, score: int, sync_device_id: int, updated_at: datetime.datetime) -> Self:
         self.score = score
