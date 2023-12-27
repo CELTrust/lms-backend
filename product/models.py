@@ -1,8 +1,4 @@
-import random
-from collections.abc import Iterable
-
 from django.db import models
-from django.utils.text import slugify
 
 from common.models import CommonFields, DescCommonFields, Tracker
 

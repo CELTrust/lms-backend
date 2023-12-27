@@ -1,16 +1,15 @@
 import datetime
 from typing import List
 
-from ninja import Schema
+from ninja import ModelSchema, Schema
+
+from product.models import Course
 
 
-class CourseSchema(Schema):
-    id: int
-    name: str
-    slug: str
-    description: str
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+class CourseSchema(ModelSchema):
+    class Meta:
+        model = Course
+        fields = '__all__'
 
 class LessonSchema(Schema):
     id: int
