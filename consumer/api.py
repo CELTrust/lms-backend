@@ -6,11 +6,12 @@ from consumer.models import (CELUser, CourseAttempt, LessonAttempt,
                              QuestionAttempt)
 from product.models import Course, Lesson
 
-from .schema import (SyncCELUsersIn, SyncCELUsersOut, SyncCourseAttemptOut,
-                     SyncCourseAttemptsIn, SyncCourseAttemptsOut,
-                     SyncLessonAttemptOut, SyncLessonAttemptsIn,
-                     SyncLessonAttemptsOut, SyncQuestionAttemptOut,
-                     SyncQuestionAttemptsIn, SyncQuestionAttemptsOut)
+from .schema import (SyncCELUserOut, SyncCELUsersIn, SyncCELUsersOut,
+                     SyncCourseAttemptOut, SyncCourseAttemptsIn,
+                     SyncCourseAttemptsOut, SyncLessonAttemptOut,
+                     SyncLessonAttemptsIn, SyncLessonAttemptsOut,
+                     SyncQuestionAttemptOut, SyncQuestionAttemptsIn,
+                     SyncQuestionAttemptsOut)
 
 router = Router(tags=["Consumer"])
 
@@ -123,4 +124,18 @@ def create_quiz_attempt(request, payload: SyncQuestionAttemptsIn):
 
 @router.post("sync-cel-users", response=SyncCELUsersOut)
 def sync_cel_users(request, payload: SyncCELUsersIn):
-    pass
+    results = []
+    for item in payload.data:
+        try:
+            user = CELUser.objects.filter(gr_number=item.gr_number).first()
+            if user and user.school_id != item.school_id:
+                    raise Exception("This GR number {0} is already associated with a different school".format(item.gr_number))
+
+            if not user:
+                user = CELUser.create(school_id=item.school_id, name=item.name, gr_number=item.gr_number)
+            result = SyncCELUserOut.create_success(gr_number=item.gr_number)
+            results.append(result)
+        except Exception as e:
+            result = SyncCELUserOut.create_error(gr_number=item.gr_number, detail=e.__str__())
+            results.append(result)
+    return SyncCELUsersOut(results=results)

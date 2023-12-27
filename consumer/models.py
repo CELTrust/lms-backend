@@ -27,6 +27,10 @@ class CELUser(Tracker):
     def exists(cls, id) -> bool:
         return cls.objects.filter(id=id).exists()
 
+    @classmethod
+    def create(cls, school_id, name, gr_number) -> Self:
+        return cls.objects.create(school_id=school_id, name=name, gr_number=gr_number)
+
 
 class CourseAttempt(AttemptTracker):
     user = models.ForeignKey(

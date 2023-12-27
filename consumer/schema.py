@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Literal
+from typing import List, Literal, Self
 
 from ninja import Schema
 
@@ -142,8 +142,8 @@ class CELUserIn(Schema):
     gr_number: str
     name: str
 
-
 class SyncCELUsersIn(Schema):
+
     data: List[CELUserIn]
 
 
@@ -151,6 +151,14 @@ class SyncCELUserOut(Schema):
     gr_number: str
     result: Literal["success", "error"]
     detail: str = ""
+
+    @classmethod
+    def create_success(cls, gr_number) -> Self:
+        return cls(gr_number=gr_number, result="success")
+
+    @classmethod
+    def create_error(cls, gr_number, detail) -> Self:
+        return cls(gr_number=gr_number, result="error", detail=detail)
 
 
 class SyncCELUsersOut(Schema):
