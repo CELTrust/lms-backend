@@ -1,10 +1,26 @@
+import random
+import string
+
 from django.db import models
 
 from common.models import CommonFields, DescCommonFields, Tracker
 
 
 class School(CommonFields):
-    pass
+    unique_code = models.CharField(max_length=10, editable=False, unique=True)
+
+    @classmethod
+    def generate_unique_code(cls) -> str:
+        code = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        if cls.objects.filter(unique_code=code).exists():
+            return cls.generate_unique_code()
+        return code
+
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.unique_code:
+            self.unique_code = self.__class__.generate_unique_code()
+        return super().save(*args, **kwargs)
 
 
 class Course(DescCommonFields):
