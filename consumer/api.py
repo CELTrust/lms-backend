@@ -1,15 +1,17 @@
+from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
 
 from consumer.models import (CELUser, CourseAttempt, LessonAttempt,
-                             QuestionAttempt)
+                             ProjectUploadAttempt, QuestionAttempt)
 from product.models import Course, Lesson
 
-from .schema import (SyncCELUserOut, SyncCELUsersIn, SyncCELUsersOut,
-                     SyncCourseAttemptOut, SyncCourseAttemptsIn,
-                     SyncCourseAttemptsOut, SyncLessonAttemptOut,
-                     SyncLessonAttemptsIn, SyncLessonAttemptsOut,
-                     SyncQuestionAttemptOut, SyncQuestionAttemptsIn,
-                     SyncQuestionAttemptsOut)
+from .schema import (ProjectUploadAttemptSchema, ProjectUploadAttemptSchemaIn,
+                     ProjectUploadMarkFinished, SyncCELUserOut, SyncCELUsersIn,
+                     SyncCELUsersOut, SyncCourseAttemptOut,
+                     SyncCourseAttemptsIn, SyncCourseAttemptsOut,
+                     SyncLessonAttemptOut, SyncLessonAttemptsIn,
+                     SyncLessonAttemptsOut, SyncQuestionAttemptOut,
+                     SyncQuestionAttemptsIn, SyncQuestionAttemptsOut)
 
 router = Router(tags=["Consumer"])
 
@@ -135,3 +137,14 @@ def sync_cel_users(request, payload: SyncCELUsersIn):
             result = SyncCELUserOut.create_error(gr_number=item.gr_number, detail=e.__str__())
             results.append(result)
     return SyncCELUsersOut(results=results)
+
+@router.post("get-upload-details", response=ProjectUploadAttemptSchema)
+def get_upload_details(request, payload: ProjectUploadAttemptSchemaIn):
+    user = get_object_or_404(CELUser, gr_number=payload.gr_number, school_id=payload.school_id)
+    course = get_object_or_404(Course, id=payload.course_id)
+    return ProjectUploadAttempt.create_new(user_id=user.id, course_id=course.id, file=payload.filename,
+                                           updated_at=payload.updated_at)
+
+@router.post("mark-upload-finished", response=ProjectUploadAttemptSchema)
+def mark_upload_finished(request, payload: ProjectUploadMarkFinished):
+    return ProjectUploadAttempt.mark_finished(payload.id)

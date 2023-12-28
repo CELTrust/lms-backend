@@ -1,7 +1,9 @@
 import datetime
 from typing import List, Literal, Self
 
-from ninja import Schema
+from ninja import ModelSchema, Schema
+
+from consumer.models import ProjectUploadAttempt
 
 
 class CourseAttemptIn(Schema):
@@ -163,3 +165,19 @@ class SyncCELUserOut(Schema):
 
 class SyncCELUsersOut(Schema):
     results: List[SyncCELUserOut]
+
+
+class ProjectUploadAttemptSchemaIn(Schema):
+    gr_number: str
+    school_id: int
+    course_id: int
+    filename: str
+    updated_at: datetime.datetime
+
+class ProjectUploadAttemptSchema(ModelSchema):
+    class Meta:
+        model = ProjectUploadAttempt
+        fields = '__all__'
+
+class ProjectUploadMarkFinished(Schema):
+    id: int

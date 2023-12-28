@@ -1,7 +1,9 @@
 import datetime
-from tkinter.tix import Tree
+import os
+from uuid import uuid1
 
 from django.db import models
+from django.shortcuts import get_object_or_404
 from typing_extensions import Self
 
 from common import constants
@@ -123,6 +125,26 @@ class ProjectUploadAttempt(AttemptTracker):
 
     class Meta:
         unique_together = ("user", "course")
+
+    @classmethod
+    def create_new(cls, user_id: int, course_id: int, file: str, updated_at: datetime.datetime) -> Self:
+        filename, ext = os.path.splitext(file)
+        uniq = str(uuid1())[-5:]
+        path = "/user/{user_id}/course/{course_id}/{filename}-{uniq}{ext}".format(
+            user_id=user_id, course_id=course_id, filename=filename, ext=ext, uniq=uniq)
+
+        return cls.objects.create(user_id=user_id, course_id=course_id, file_path=path,
+                                  started_at=updated_at, updated_at=updated_at, status=constants.STATUS_STARTED)
+
+    @classmethod
+    def mark_finished(cls, id: int) -> Self:
+        attempt = get_object_or_404(cls, id=id)
+        # TODO: add code to check on s3 whether the file exists or not
+        attempt.updated_at = datetime.datetime.now()
+        attempt.status = constants.STATUS_FINISHED
+        attempt.save()
+        return attempt
+
 
 # Answers
 class QuestionAttempt(AttemptTracker):
