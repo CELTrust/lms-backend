@@ -8,7 +8,10 @@ from typing_extensions import Self
 
 from common import constants
 from common.models import AttemptTracker, Tracker
-from product.models import Course, Lesson, Option, Question, School
+from consumer.exceptions import ErrFileNotUploaded
+from lms.s3 import (UploadDataSchema, create_presigned_url_get,
+                    create_presigned_url_post, does_file_exist)
+from product.models import Course, Lesson, Question, School
 
 
 class CELUser(Tracker):
@@ -136,10 +139,23 @@ class ProjectUploadAttempt(AttemptTracker):
         return cls.objects.create(user_id=user_id, course_id=course_id, file_path=path,
                                   started_at=updated_at, updated_at=updated_at, status=constants.STATUS_STARTED)
 
+    @property
+    def upload_url(self) -> UploadDataSchema:
+        return create_presigned_url_post(file_path=self.file_path)
+
+    @property
+    def download_url(self):
+        return create_presigned_url_get(file_path=self.file_path)
+
+    def does_file_exist(self) -> bool:
+        return does_file_exist(self.file_path)
+
     @classmethod
     def mark_finished(cls, id: int) -> Self:
         attempt = get_object_or_404(cls, id=id)
-        # TODO: add code to check on s3 whether the file exists or not
+        if not attempt.does_file_exist():
+            raise ErrFileNotUploaded
+
         attempt.updated_at = datetime.datetime.now()
         attempt.status = constants.STATUS_FINISHED
         attempt.save()

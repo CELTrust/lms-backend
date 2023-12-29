@@ -15,10 +15,6 @@ from .schema import (ProjectUploadAttemptSchema, ProjectUploadAttemptSchemaIn,
 
 router = Router(tags=["Consumer"])
 
-class Response(Schema):
-    message: str
-
-
 @router.post("sync-course-attempts", response=SyncCourseAttemptsOut)
 def sync_course_attempts(request, payload: SyncCourseAttemptsIn):
     """

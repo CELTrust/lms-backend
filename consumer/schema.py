@@ -4,6 +4,7 @@ from typing import List, Literal, Self
 from ninja import ModelSchema, Schema
 
 from consumer.models import ProjectUploadAttempt
+from lms.s3 import UploadDataSchema
 
 
 class CourseAttemptIn(Schema):
@@ -178,6 +179,9 @@ class ProjectUploadAttemptSchema(ModelSchema):
     class Meta:
         model = ProjectUploadAttempt
         fields = '__all__'
+
+    upload_url: UploadDataSchema
+    download_url: str
 
 class ProjectUploadMarkFinished(Schema):
     id: int
